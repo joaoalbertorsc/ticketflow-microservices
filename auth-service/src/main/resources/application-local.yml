@@ -1,0 +1,8 @@
+# Development-only values for running from the IDE against the Postgres from docker compose.
+# Never use these outside your machine.
+ticketflow:
+  jwt:
+    secret: ${JWT_SECRET:local-dev-secret-change-me-0123456789abcdef}
+  admin:
+    email: ${ADMIN_EMAIL:admin@ticketflow.local}
+    password: ${ADMIN_PASSWORD:Admin12345}
