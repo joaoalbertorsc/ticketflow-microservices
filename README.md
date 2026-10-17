@@ -12,7 +12,7 @@ microservice architecture: database per service, an orchestrated **saga** with c
 |---|---|---|---|
 | [api-gateway](api-gateway/) | 8080 | — | not started |
 | [auth-service](auth-service/) | 8081 | PostgreSQL | done |
-| [catalog-service](catalog-service/) | 8082 | MongoDB + Redis | not started |
+| [catalog-service](catalog-service/) | 8082 | MongoDB + Redis | done |
 | [inventory-service](inventory-service/) | 8083 | PostgreSQL | not started |
 | [payment-service](payment-service/) | 8084 | PostgreSQL | not started |
 | [notification-service](notification-service/) | 8085 | MongoDB | not started |
