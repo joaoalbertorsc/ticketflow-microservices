@@ -1,14 +1,17 @@
 #!/usr/bin/env bash
-# Fills the catalog with sample venues and published events, through the real APIs.
-# Requires auth-service (8081) and catalog-service (8082) running, e.g. `docker compose up -d`.
+# Fills the system with sample data through the real APIs: venues and published events in the
+# catalog, and the seat count of every sector in the inventory.
+# Requires auth-service (8081), catalog-service (8082) and inventory-service (8083) running,
+# e.g. `docker compose up -d`.
 #
-#   ./scripts/seed-catalog.sh
+#   ./scripts/seed.sh
 #
-# Override with AUTH_URL, CATALOG_URL, ADMIN_EMAIL, ADMIN_PASSWORD.
+# Override with AUTH_URL, CATALOG_URL, INVENTORY_URL, ADMIN_EMAIL, ADMIN_PASSWORD.
 set -euo pipefail
 
 AUTH_URL="${AUTH_URL:-http://localhost:8081}"
 CATALOG_URL="${CATALOG_URL:-http://localhost:8082}"
+INVENTORY_URL="${INVENTORY_URL:-http://localhost:8083}"
 ADMIN_EMAIL="${ADMIN_EMAIL:-admin@ticketflow.local}"
 ADMIN_PASSWORD="${ADMIN_PASSWORD:-Admin12345}"
 
@@ -32,6 +35,10 @@ event() { # json -> id (created and published)
   id=$(post /api/events "$1" | json_field id)
   post "/api/events/$id/publish" '' > /dev/null
   echo "$id"
+}
+
+seats() { # eventId sectorId totalSeats
+  curl -sf -X PUT -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" -d "{\"totalSeats\":$3}" "$INVENTORY_URL/api/inventory/events/$1/sectors/$2" > /dev/null
 }
 
 # Dates relative to today, so the events are always in the future.
@@ -70,6 +77,16 @@ PLAY=$(event "{
   \"details\": {\"type\": \"THEATER\", \"director\": \"Ana Lima\", \"cast\": [\"Pedro Alves\", \"Julia Reis\"], \"durationMinutes\": 150}
 }")
 
+seats "$CONCERT" pista 5000
+seats "$CONCERT" pista-premium 800
+seats "$CONCERT" cadeira 2000
+seats "$MATCH" norte 12000
+seats "$MATCH" oeste 6000
+seats "$PLAY" plateia 300
+# Tiny sector on purpose: easy to sell out by hand and see "Not enough seats".
+seats "$PLAY" balcao 4
+
 echo "Venues:  $MARACANA $ALLIANZ $MUNICIPAL"
 echo "Events:  concert=$CONCERT match=$MATCH play=$PLAY"
 echo "Browse:  curl $CATALOG_URL/api/events"
+echo "Seats:   curl $INVENTORY_URL/api/inventory/events/$PLAY/sectors"

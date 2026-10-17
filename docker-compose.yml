@@ -78,6 +78,20 @@ services:
       redis:
         condition: service_started
 
+  inventory-service:
+    build: ./inventory-service
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/inventory_db
+      DB_USERNAME: inventory_user
+      DB_PASSWORD: inventory_pass
+      JWT_SECRET: ${JWT_SECRET:-local-dev-secret-change-me-0123456789abcdef}
+      HOLD_DURATION: ${HOLD_DURATION:-10m}
+    ports:
+      - "8083:8083"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   postgres-data:
   mongo-data:

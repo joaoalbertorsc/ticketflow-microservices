@@ -1,0 +1,7 @@
+ticketflow:
+  jwt:
+    secret: test-secret-0123456789abcdef0123456789abcdef
+  inventory:
+    # Tests run the expiry job by hand, with a controllable clock.
+    scheduling:
+      enabled: false

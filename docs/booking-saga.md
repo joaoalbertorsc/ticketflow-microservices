@@ -35,7 +35,7 @@ sequenceDiagram
     B->>P: POST /internal/payments {bookingId, amount}
     P-->>B: paymentId (APPROVED)
     B->>B: booking PAID
-    B->>I: POST /internal/reservations/{id}/confirm
+    B->>I: POST /internal/reservations/booking/{bookingId}/confirm
     I-->>B: CONFIRMED
     B->>N: POST /internal/notifications {BOOKING_CONFIRMED}
     N-->>B: SENT
@@ -59,7 +59,7 @@ sequenceDiagram
     P--xB: declined / timeout / circuit OPEN
     Note over B: compensation starts
     B->>P: POST /internal/payments/booking/{bookingId}/refund (idempotent, no-op if never charged)
-    B->>I: POST /internal/reservations/{id}/release
+    B->>I: POST /internal/reservations/booking/{bookingId}/release
     I-->>B: RELEASED
     B->>B: booking FAILED (reason stored)
     B->>N: POST /internal/notifications {BOOKING_FAILED}
@@ -118,3 +118,8 @@ stateDiagram-v2
 - **Saga log:** every step and its result is recorded in `booking_db` (`booking_saga_step`),
   so you can always see how far a booking got and why it failed.
 - **Compensations are idempotent** and safe to call more than once.
+- **Inventory calls are keyed by `bookingId`**, so the orchestrator can confirm or release even when
+  the reserve call timed out and it never learned the reservation id.
+- **Hold expired before confirm:** if payment took longer than the hold, confirm returns `409`
+  (the seats may already be someone else's). The orchestrator then refunds the payment and the
+  booking ends `FAILED`.

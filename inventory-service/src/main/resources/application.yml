@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: inventory-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/inventory_db}
+    username: ${DB_USERNAME:inventory_user}
+    password: ${DB_PASSWORD:inventory_pass}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate # Flyway owns the schema; Hibernate only checks it matches the entities
+
+server:
+  port: ${SERVER_PORT:8083}
+
+ticketflow:
+  jwt:
+    # No default on purpose: the service refuses to start without a secret.
+    secret: ${JWT_SECRET:}
+    issuer: ticketflow-auth
+  inventory:
+    hold-duration: ${HOLD_DURATION:10m}
+    expiry-job-interval: ${EXPIRY_JOB_INTERVAL:30s}
+    expiry-batch-size: 100
+    max-seats-per-booking: ${MAX_SEATS_PER_BOOKING:10}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
