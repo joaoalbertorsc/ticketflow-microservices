@@ -58,7 +58,7 @@ sequenceDiagram
     B->>P: POST /internal/payments
     P--xB: declined / timeout / circuit OPEN
     Note over B: compensation starts
-    B->>P: POST /internal/payments/booking/{bookingId}/refund (idempotent, no-op if never charged)
+    B->>P: POST /internal/payments/booking/{bookingId}/refund (idempotent; voids if never charged)
     B->>I: POST /internal/reservations/booking/{bookingId}/release
     I-->>B: RELEASED
     B->>B: booking FAILED (reason stored)
@@ -67,7 +67,13 @@ sequenceDiagram
 
 The refund call matters when the payment call **timed out**: the orchestrator cannot know
 whether the charge happened, so it asks for a refund by `bookingId`. The payment service
-refunds if a charge exists and does nothing otherwise.
+refunds if a charge exists. If there is none yet, it records the booking as `VOIDED`, so a
+charge request that arrives *late* (it was still travelling when the timeout fired) is refused
+instead of taking money that would never be returned.
+
+A **declined card** takes the same compensation path (release the seats, booking `FAILED`), but it
+is a normal business answer (`201`, status `DECLINED`), not an error: it doesn't count against the
+payment circuit breaker.
 
 ## Failure: notification-service down → fallback, no compensation
 

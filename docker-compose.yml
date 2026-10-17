@@ -92,6 +92,19 @@ services:
       postgres:
         condition: service_healthy
 
+  payment-service:
+    build: ./payment-service
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/payment_db
+      DB_USERNAME: payment_user
+      DB_PASSWORD: payment_pass
+      JWT_SECRET: ${JWT_SECRET:-local-dev-secret-change-me-0123456789abcdef}
+    ports:
+      - "8084:8084"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   postgres-data:
   mongo-data:

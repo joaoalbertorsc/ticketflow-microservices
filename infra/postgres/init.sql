@@ -11,3 +11,8 @@ REVOKE ALL ON DATABASE auth_db FROM PUBLIC;
 CREATE USER inventory_user WITH PASSWORD 'inventory_pass';
 CREATE DATABASE inventory_db OWNER inventory_user;
 REVOKE ALL ON DATABASE inventory_db FROM PUBLIC;
+
+-- payment-service
+CREATE USER payment_user WITH PASSWORD 'payment_pass';
+CREATE DATABASE payment_db OWNER payment_user;
+REVOKE ALL ON DATABASE payment_db FROM PUBLIC;

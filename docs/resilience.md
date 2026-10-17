@@ -46,8 +46,16 @@ Initial values (tuned per service in `booking-service/src/main/resources/applica
 `payment-service` has a chaos switch (admin only) to force failures or slowness:
 
 ```
-POST /api/payments/admin/chaos {"failureRate": 1.0, "latencyMs": 0}
+PUT /api/payments/admin/chaos {"failureRate": 1.0, "latencyMs": 0}
+DELETE /api/payments/admin/chaos        # back to normal
 ```
+
+Chaos only affects **charges** (refunds stay reliable, so compensation keeps working).
+
+**A declined card is not a failure for the circuit breaker.** payment-service answers `201` with
+status `DECLINED`: the service worked and the answer was "no". Only `5xx` responses, connection
+errors and timeouts count. Otherwise a run of users with empty cards would open the circuit and
+block everyone.
 
 Demo script:
 

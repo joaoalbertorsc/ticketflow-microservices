@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: payment-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/payment_db}
+    username: ${DB_USERNAME:payment_user}
+    password: ${DB_PASSWORD:payment_pass}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate # Flyway owns the schema; Hibernate only checks it matches the entities
+
+server:
+  port: ${SERVER_PORT:8084}
+
+ticketflow:
+  jwt:
+    # No default on purpose: the service refuses to start without a secret.
+    secret: ${JWT_SECRET:}
+    issuer: ticketflow-auth
+  payment:
+    limit: ${PAYMENT_LIMIT:50000.00}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
