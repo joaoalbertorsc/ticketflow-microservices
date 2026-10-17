@@ -64,6 +64,14 @@ class UserControllersTest {
 	}
 
 	@Test
+	void regularUserGets403EvenWithAnInvalidBody() throws Exception {
+		mvc.perform(put("/api/users/{id}/roles", UUID.randomUUID())
+						.with(jwt().authorities(new SimpleGrantedAuthority("ROLE_USER")))
+						.contentType(MediaType.APPLICATION_JSON).content("{}"))
+				.andExpect(status().isForbidden());
+	}
+
+	@Test
 	void unknownRoleReturns400() throws Exception {
 		mvc.perform(put("/api/users/{id}/roles", UUID.randomUUID())
 						.with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))

@@ -39,6 +39,9 @@ public class SecurityConfig {
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authorizeHttpRequests(auth -> auth
 						.requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login").permitAll()
+						// Checked here, before the body is read: a non-admin gets 403, never validation errors.
+						// @PreAuthorize on the controller stays as a second layer.
+						.requestMatchers("/api/users/**").hasRole("ADMIN")
 						.requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
 						.requestMatchers("/error").permitAll()
 						.anyRequest().authenticated())
