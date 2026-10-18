@@ -105,6 +105,17 @@ services:
       postgres:
         condition: service_healthy
 
+  notification-service:
+    build: ./notification-service
+    environment:
+      MONGODB_URI: mongodb://notification_user:notification_pass@mongo:27017/notification_db
+      JWT_SECRET: ${JWT_SECRET:-local-dev-secret-change-me-0123456789abcdef}
+    ports:
+      - "8085:8085"
+    depends_on:
+      mongo:
+        condition: service_healthy
+
 volumes:
   postgres-data:
   mongo-data:

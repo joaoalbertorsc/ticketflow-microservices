@@ -15,7 +15,7 @@ microservice architecture: database per service, an orchestrated **saga** with c
 | [catalog-service](catalog-service/) | 8082 | MongoDB + Redis | done |
 | [inventory-service](inventory-service/) | 8083 | PostgreSQL | done |
 | [payment-service](payment-service/) | 8084 | PostgreSQL | done |
-| [notification-service](notification-service/) | 8085 | MongoDB | not started |
+| [notification-service](notification-service/) | 8085 | MongoDB | done |
 | [booking-service](booking-service/) | 8086 | PostgreSQL | not started |
 
 ## Tech stack
