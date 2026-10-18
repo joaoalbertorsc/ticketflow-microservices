@@ -1,3 +1,5 @@
+**English** | [Português (Brasil)](README.pt-BR.md)
+
 # api-gateway
 
 > Status: **done**

@@ -1,3 +1,5 @@
+**English** | [Português (Brasil)](README.pt-BR.md)
+
 # TicketFlow — Microservices Ticketing Backend
 
 An event-ticketing backend built as independent **Spring Boot** microservices to practise
