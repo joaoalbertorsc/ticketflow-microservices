@@ -1,0 +1,67 @@
+spring:
+  application:
+    name: api-gateway
+  threads:
+    virtual:
+      enabled: true # a request waiting on a slow service costs a virtual thread, not a platform one
+  http:
+    clients:
+      # HTTP/1.1 only (HttpURLConnection). The JDK client's default h2c upgrade breaks on requests
+      # with a body ("RST_STREAM: Stream cancelled"); the services speak HTTP/1.1 anyway.
+      imperative:
+        factory: simple
+      # A redirect from a service is the client's to follow, not the gateway's.
+      redirects: dont-follow
+      connect-timeout: 2s
+      # A booking runs the whole saga before answering; booking-service limits each of its own
+      # downstream calls to 3 s, so 15 s here is only a last-resort ceiling.
+      read-timeout: 15s
+  cloud:
+    gateway:
+      server:
+        webmvc:
+          # Paths are forwarded unchanged. /internal/** matches no route on purpose: it is never exposed.
+          routes:
+            - id: auth-service
+              uri: ${AUTH_URL:http://localhost:8081}
+              predicates:
+                - Path=/api/auth/**,/api/users/**
+            - id: catalog-service
+              uri: ${CATALOG_URL:http://localhost:8082}
+              predicates:
+                - Path=/api/events,/api/events/**,/api/venues,/api/venues/**,/api/admin/events,/api/admin/events/**
+            - id: inventory-service
+              uri: ${INVENTORY_URL:http://localhost:8083}
+              predicates:
+                - Path=/api/inventory/**
+            - id: payment-service
+              uri: ${PAYMENT_URL:http://localhost:8084}
+              predicates:
+                - Path=/api/payments/**
+            - id: notification-service
+              uri: ${NOTIFICATION_URL:http://localhost:8085}
+              predicates:
+                - Path=/api/notifications/**,/api/admin/notifications,/api/admin/notifications/**
+            - id: booking-service
+              uri: ${BOOKING_URL:http://localhost:8086}
+              predicates:
+                - Path=/api/bookings,/api/bookings/**,/api/admin/bookings,/api/admin/bookings/**
+
+server:
+  port: ${SERVER_PORT:8080}
+
+ticketflow:
+  jwt:
+    # No default on purpose: the gateway refuses to start without a secret.
+    secret: ${JWT_SECRET:}
+    issuer: ticketflow-auth
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true

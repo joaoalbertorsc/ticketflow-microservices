@@ -1,0 +1,5 @@
+# Development-only values for running from the IDE.
+# Must match the JWT secret used by auth-service.
+ticketflow:
+  jwt:
+    secret: ${JWT_SECRET:local-dev-secret-change-me-0123456789abcdef}

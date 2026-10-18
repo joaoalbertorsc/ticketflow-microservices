@@ -1,17 +1,18 @@
 #!/usr/bin/env bash
 # Fills the system with sample data through the real APIs: venues and published events in the
 # catalog, and the seat count of every sector in the inventory.
-# Requires auth-service (8081), catalog-service (8082) and inventory-service (8083) running,
-# e.g. `docker compose up -d`.
+# Goes through the api-gateway (8080), like any client. Requires the stack running
+# (`docker compose up -d`).
 #
 #   ./scripts/seed.sh
 #
-# Override with AUTH_URL, CATALOG_URL, INVENTORY_URL, ADMIN_EMAIL, ADMIN_PASSWORD.
+# Override with GATEWAY_URL (or AUTH_URL, CATALOG_URL, INVENTORY_URL), ADMIN_EMAIL, ADMIN_PASSWORD.
 set -euo pipefail
 
-AUTH_URL="${AUTH_URL:-http://localhost:8081}"
-CATALOG_URL="${CATALOG_URL:-http://localhost:8082}"
-INVENTORY_URL="${INVENTORY_URL:-http://localhost:8083}"
+GATEWAY_URL="${GATEWAY_URL:-http://localhost:8080}"
+AUTH_URL="${AUTH_URL:-$GATEWAY_URL}"
+CATALOG_URL="${CATALOG_URL:-$GATEWAY_URL}"
+INVENTORY_URL="${INVENTORY_URL:-$GATEWAY_URL}"
 ADMIN_EMAIL="${ADMIN_EMAIL:-admin@ticketflow.local}"
 ADMIN_PASSWORD="${ADMIN_PASSWORD:-Admin12345}"
 
