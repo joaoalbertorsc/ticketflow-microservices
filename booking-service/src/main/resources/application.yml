@@ -1,0 +1,84 @@
+spring:
+  application:
+    name: booking-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/booking_db}
+    username: ${DB_USERNAME:booking_user}
+    password: ${DB_PASSWORD:booking_pass}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate # Flyway owns the schema; Hibernate only checks it matches the entities
+
+server:
+  port: ${SERVER_PORT:8086}
+
+ticketflow:
+  jwt:
+    # No default on purpose: the service refuses to start without a secret.
+    secret: ${JWT_SECRET:}
+    issuer: ticketflow-auth
+  downstream:
+    auth-url: ${AUTH_URL:http://localhost:8081}
+    catalog-url: ${CATALOG_URL:http://localhost:8082}
+    inventory-url: ${INVENTORY_URL:http://localhost:8083}
+    payment-url: ${PAYMENT_URL:http://localhost:8084}
+    notification-url: ${NOTIFICATION_URL:http://localhost:8085}
+    connect-timeout: 1s
+    # Plays the role of a time limiter: a service that doesn't answer in 3 s counts as a failure.
+    read-timeout: ${DOWNSTREAM_READ_TIMEOUT:3s}
+  recovery:
+    interval: ${RECOVERY_INTERVAL:30s}
+    stuck-after: 5m
+    batch-size: 20
+
+# One circuit breaker per downstream service, all sharing the same settings.
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        slow-call-duration-threshold: 2s
+        slow-call-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        register-health-indicator: true
+    instances:
+      authService:
+        base-config: default
+      catalogService:
+        base-config: default
+      inventoryService:
+        base-config: default
+      paymentService:
+        base-config: default
+      # Compensations get their own breakers: failing charges / reservations must not block undoing.
+      paymentRefunds:
+        base-config: default
+      inventoryReleases:
+        base-config: default
+      notificationService:
+        base-config: default
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,circuitbreakers,circuitbreakerevents
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+      group:
+        # Ready as long as our own database is up: an open circuit is the system working as
+        # designed, not a reason to take booking-service out of rotation.
+        readiness:
+          include: readinessState,db
+  health:
+    circuitbreakers:
+      enabled: true

@@ -116,6 +116,26 @@ services:
       mongo:
         condition: service_healthy
 
+  booking-service:
+    build: ./booking-service
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/booking_db
+      DB_USERNAME: booking_user
+      DB_PASSWORD: booking_pass
+      JWT_SECRET: ${JWT_SECRET:-local-dev-secret-change-me-0123456789abcdef}
+      AUTH_URL: http://auth-service:8081
+      CATALOG_URL: http://catalog-service:8082
+      INVENTORY_URL: http://inventory-service:8083
+      PAYMENT_URL: http://payment-service:8084
+      NOTIFICATION_URL: http://notification-service:8085
+    ports:
+      - "8086:8086"
+    # Only its own database is required to start: the other services can be down — that is what
+    # the circuit breakers and fallbacks are for.
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   postgres-data:
   mongo-data:

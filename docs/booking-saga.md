@@ -77,17 +77,27 @@ payment circuit breaker.
 
 ## Failure: notification-service down → fallback, no compensation
 
-A notification is not worth cancelling a paid booking. The circuit breaker fallback stores
-the notification on the booking as `PENDING` and the booking still ends as `CONFIRMED`.
+A notification is not worth cancelling a paid booking. The circuit breaker fallback marks the
+booking's notification as `PENDING`, the booking still ends `CONFIRMED`, and the recovery job sends
+the notification once notification-service is back. notification-service is idempotent by
+(booking, type), so the user never gets it twice.
+
+## Failure: an undo step can't run → COMPENSATING, finished later
+
+If payment-service is down when the saga tries to **refund**, the booking does not become `FAILED`.
+It stays `COMPENSATING` (or `CANCELLING` for a cancellation) until every undo step has succeeded.
+The recovery job in booking-service retries every 30 s. A booking is never marked finished while it
+still holds the user's money or seats.
 
 ## Cancel Booking
 
 Reverse saga, triggered by `POST /api/bookings/{id}/cancel` on a `CONFIRMED` booking:
 
-1. `payment-service` — refund
-2. `inventory-service` — release seats
-3. `notification-service` — `BOOKING_CANCELLED` (fallback: `PENDING`)
-4. booking → `CANCELLED`
+1. booking → `CANCELLING` (only before the event starts)
+2. `payment-service` — refund
+3. `inventory-service` — release seats (`reason=CANCELLED`)
+4. booking → `CANCELLED` (or stays `CANCELLING` for the recovery job if 2 or 3 couldn't run)
+5. `notification-service` — `BOOKING_CANCELLED` (fallback: `PENDING`)
 
 ## Booking state machine
 
@@ -95,11 +105,15 @@ Reverse saga, triggered by `POST /api/bookings/{id}/cancel` on a `CONFIRMED` boo
 stateDiagram-v2
     [*] --> PENDING
     PENDING --> SEATS_RESERVED: seats held
-    PENDING --> FAILED: user/event invalid, no seats
+    PENDING --> FAILED: user/event invalid, sold out, auth/catalog down
+    PENDING --> COMPENSATING: reserve unavailable (hold may exist)
     SEATS_RESERVED --> PAID: payment approved
-    SEATS_RESERVED --> FAILED: payment failed (seats released)
+    SEATS_RESERVED --> COMPENSATING: payment declined / unavailable
     PAID --> CONFIRMED: reservation confirmed
-    CONFIRMED --> CANCELLED: user cancels (refund + release)
+    PAID --> COMPENSATING: hold expired / inventory unavailable
+    COMPENSATING --> FAILED: refund + release done
+    CONFIRMED --> CANCELLING: user cancels
+    CANCELLING --> CANCELLED: refund + release done
     FAILED --> [*]
     CANCELLED --> [*]
 ```
@@ -121,8 +135,19 @@ stateDiagram-v2
   Retrying a step never holds seats twice or charges twice.
 - **Hold expiry:** a `HELD` reservation expires after 10 minutes. If the orchestrator crashes
   mid-saga, seats are not locked forever — a scheduled job in `inventory-service` releases them.
-- **Saga log:** every step and its result is recorded in `booking_db` (`booking_saga_step`),
-  so you can always see how far a booking got and why it failed.
+- **Each step is committed before the next call:** after a crash, the database says exactly how far
+  the booking got.
+- **Saga log:** every step and its result is recorded in `booking_db` (`booking_saga_steps`) and
+  returned with the booking, so you can always see how far a booking got and why it failed.
+- **Recovery job (booking-service, every 30 s):** finishes undo steps that couldn't run, rolls back
+  sagas interrupted by a crash (left in progress for more than 5 minutes → `FAILED
+  SAGA_INTERRUPTED`), and sends `PENDING` notifications. It locks each booking with `SKIP LOCKED`,
+  so several instances never work on the same one.
+- **"On behalf of" tokens:** booking-service signs a 60-second token for each downstream call, with
+  the booking's user as subject. Leaf services record the right owner, and the recovery job, which
+  has no user request, can still call them.
+- **Idempotent create:** an `Idempotency-Key` header on `POST /api/bookings` makes a client retry
+  return the same booking instead of booking twice.
 - **Compensations are idempotent** and safe to call more than once.
 - **Inventory calls are keyed by `bookingId`**, so the orchestrator can confirm or release even when
   the reserve call timed out and it never learned the reservation id.
