@@ -62,6 +62,9 @@ flowchart LR
     gw --> auth
     gw --> catalog
     gw --> booking
+    gw -.->|public API| inventory
+    gw -.->|public API| payment
+    gw -.->|public API| notification
 
     booking -->|REST + CB| auth
     booking -->|REST + CB| catalog
@@ -79,6 +82,9 @@ flowchart LR
 ```
 
 `CB` = call wrapped in a Resilience4j circuit breaker (see [resilience.md](resilience.md)).
+Dotted lines: the gateway also routes those services' own public endpoints (seat availability,
+"my payments", "my notifications", admin tools). The **saga** only ever goes through
+booking-service.
 
 ## Communication rules
 
@@ -87,7 +93,8 @@ flowchart LR
    (`auth`, `catalog`, `inventory`, `payment`, `notification`) never call each other.
    This keeps the dependency graph a star, with no cycles.
 3. The gateway exposes **public** routes. Endpoints meant only for service-to-service
-   calls live under `/internal/**` and are **not** routed by the gateway.
+   calls live under `/internal/**` and are **not** routed by the gateway (it answers `404`).
+   See [ADR 0007](adr/0007-web-mvc-gateway.md).
 4. Services find each other by Docker Compose hostname (e.g. `http://payment-service:8084`),
    configured per environment in `application.yml` — no service discovery needed
    ([ADR 0006](adr/0006-no-discovery-no-config-server.md)).
@@ -107,11 +114,15 @@ See [ADR 0002](adr/0002-database-per-service.md).
 
 - `auth-service` registers users, checks credentials and issues signed JWTs (roles: `USER`, `ADMIN`).
 - `api-gateway` validates the token on every protected route and rejects invalid ones early.
+- Admin routes are enforced in each service's security filter chain, **before** the body is read, so
+  a non-admin always gets `403`, never validation errors. `@PreAuthorize` is a second layer.
 - Each service validates the token again (defence in depth) and enforces fine-grained rules
-  with Spring Security (`@PreAuthorize`). The orchestrator forwards the caller's token on
-  downstream calls.
+  (roles, ownership: someone else's payment or booking answers `404`).
+- On downstream calls, booking-service sends a short-lived **"on behalf of" token** for the booking's
+  user, so the recovery job, which has no user request, can call services too.
 
-See [ADR 0004](adr/0004-jwt-with-spring-security.md).
+See [ADR 0004](adr/0004-jwt-with-spring-security.md) and
+[ADR 0008](adr/0008-on-behalf-of-tokens.md).
 
 ## Main business flow
 

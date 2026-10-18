@@ -1,0 +1,46 @@
+# Builds and tests every service on its own, in parallel. Ubuntu runners have Docker, so the
+# Testcontainers tests (PostgreSQL, MongoDB, Redis) run here exactly as they do locally.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    name: ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false # one failing service shouldn't hide the others' results
+      matrix:
+        service:
+          - api-gateway
+          - auth-service
+          - catalog-service
+          - inventory-service
+          - payment-service
+          - notification-service
+          - booking-service
+    defaults:
+      run:
+        working-directory: ${{ matrix.service }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: ${{ matrix.service }}/pom.xml
+
+      - name: Test
+        run: ./mvnw -B verify
+
+      - name: Upload test reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.service }}-test-reports
+          path: ${{ matrix.service }}/target/surefire-reports/

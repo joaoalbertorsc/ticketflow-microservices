@@ -15,7 +15,8 @@ identity provider (Keycloak) adds setup without much benefit at this stage.
 - Tokens are signed with **HS256** and a secret provided by environment variable.
 - `api-gateway` validates the token on protected routes.
 - Each service validates the token again and enforces roles with `@PreAuthorize`.
-- `booking-service` forwards the caller's token on downstream calls.
+- On downstream calls, `booking-service` sends its own short-lived token on behalf of the booking's
+  user, rather than forwarding the caller's ([ADR 0008](0008-on-behalf-of-tokens.md)).
 
 ## Consequences
 
