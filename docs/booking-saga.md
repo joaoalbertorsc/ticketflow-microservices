@@ -58,7 +58,7 @@ sequenceDiagram
     B->>P: POST /internal/payments
     P--xB: declined / timeout / circuit OPEN
     Note over B: compensation starts
-    B->>P: POST /internal/payments/booking/{bookingId}/refund (idempotent; voids if never charged)
+    B->>P: POST /internal/payments/booking/{bookingId}/refund (idempotent, voids if never charged)
     B->>I: POST /internal/reservations/booking/{bookingId}/release
     I-->>B: RELEASED
     B->>B: booking FAILED (reason stored)
