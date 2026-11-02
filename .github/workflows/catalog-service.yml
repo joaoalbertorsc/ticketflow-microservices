@@ -1,0 +1,46 @@
+# Builds and tests catalog-service whenever its code changes. Ubuntu runners have Docker, so the
+# Testcontainers tests run here exactly as they do locally.
+name: catalog-service
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'catalog-service/**'
+      - '!catalog-service/**/*.md'
+      - '.github/workflows/catalog-service.yml'
+  pull_request:
+    paths:
+      - 'catalog-service/**'
+      - '!catalog-service/**/*.md'
+      - '.github/workflows/catalog-service.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: catalog-service
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: catalog-service/pom.xml
+
+      - name: Test
+        run: ./mvnw -B verify
+
+      - name: Upload test reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v5
+        with:
+          name: catalog-service-test-reports
+          path: catalog-service/target/surefire-reports/
