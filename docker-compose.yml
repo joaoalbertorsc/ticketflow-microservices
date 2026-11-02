@@ -20,6 +20,32 @@ services:
       timeout: 3s
       retries: 10
 
+  mongo:
+    image: mongo:8.0
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-root}
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+      - ./infra/mongo/init.js:/docker-entrypoint-initdb.d/init.js:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:8-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   auth-service:
     build: ./auth-service
     environment:
@@ -36,5 +62,22 @@ services:
       postgres:
         condition: service_healthy
 
+  catalog-service:
+    build: ./catalog-service
+    environment:
+      MONGODB_URI: mongodb://catalog_user:catalog_pass@mongo:27017/catalog_db
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET:-local-dev-secret-change-me-0123456789abcdef}
+    ports:
+      - "8082:8082"
+    depends_on:
+      mongo:
+        condition: service_healthy
+      # Redis is not "service_healthy" on purpose: catalog works without it (cache only).
+      redis:
+        condition: service_started
+
 volumes:
   postgres-data:
+  mongo-data:
