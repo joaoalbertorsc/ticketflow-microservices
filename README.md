@@ -11,7 +11,7 @@ microservice architecture: database per service, an orchestrated **saga** with c
 | Service | Port | Data store | Status |
 |---|---|---|---|
 | [api-gateway](api-gateway/) | 8080 | — | not started |
-| [auth-service](auth-service/) | 8081 | PostgreSQL | not started |
+| [auth-service](auth-service/) | 8081 | PostgreSQL | done |
 | [catalog-service](catalog-service/) | 8082 | MongoDB + Redis | not started |
 | [inventory-service](inventory-service/) | 8083 | PostgreSQL | not started |
 | [payment-service](payment-service/) | 8084 | PostgreSQL | not started |
@@ -47,3 +47,12 @@ Each service also has its own `docs/` folder with its internal design.
 ├── <service>/            # one standalone Maven project per service, each with its own docs/
 └── docker-compose.yml    # runs everything locally (added as services are built)
 ```
+
+## Running locally
+
+Requires Docker. Optionally copy `.env.example` to `.env` to change secrets.
+
+```bash
+docker compose up -d --build
+```
+
