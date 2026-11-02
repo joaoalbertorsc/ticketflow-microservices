@@ -1,0 +1,6 @@
+ticketflow:
+  jwt:
+    secret: test-secret-0123456789abcdef0123456789abcdef
+  admin:
+    email: admin@test.local
+    password: Admin12345
