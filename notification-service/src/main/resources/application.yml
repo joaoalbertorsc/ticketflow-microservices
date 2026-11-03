@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: notification-service
+  mongodb:
+    uri: ${MONGODB_URI:mongodb://notification_user:notification_pass@localhost:27017/notification_db}
+    representation:
+      uuid: standard # store UUIDs as BSON binary subtype 4, readable by any client
+  data:
+    mongodb:
+      auto-index-creation: true # creates the unique (bookingId, type) index from the entity
+
+server:
+  port: ${SERVER_PORT:8085}
+
+ticketflow:
+  jwt:
+    # No default on purpose: the service refuses to start without a secret.
+    secret: ${JWT_SECRET:}
+    issuer: ticketflow-auth
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
