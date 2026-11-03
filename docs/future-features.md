@@ -24,6 +24,8 @@ each of these can be added later without rewriting the services.
 - Replace the in-house `auth-service` token issuing with Keycloak (OAuth2 / OpenID Connect).
 - Services become pure resource servers validating tokens via JWKS.
 - Switch JWT signing from a shared secret to asymmetric keys (RS256) as a first step.
+- Replace booking-service's self-signed "on behalf of" tokens with an OAuth2 token exchange or
+  client-credentials flow, so no service other than the identity provider can sign tokens.
 
 ## Platform
 
@@ -36,4 +38,3 @@ each of these can be added later without rewriting the services.
 - Retry with exponential backoff on idempotent calls.
 - Bulkheads to isolate thread pools per downstream service.
 - Rate limiting at the gateway.
-- Scheduled job that resends `PENDING` notifications.
