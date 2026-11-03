@@ -8,3 +8,10 @@ db.getSiblingDB('catalog_db').createUser({
   pwd: 'catalog_pass',
   roles: [{ role: 'readWrite', db: 'catalog_db' }],
 });
+
+// notification-service
+db.getSiblingDB('notification_db').createUser({
+  user: 'notification_user',
+  pwd: 'notification_pass',
+  roles: [{ role: 'readWrite', db: 'notification_db' }],
+});
