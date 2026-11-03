@@ -39,7 +39,7 @@ docker compose up -d --build
 Then fill it with sample venues and events (needs auth-service for the admin token):
 
 ```bash
-./scripts/seed-catalog.sh
+./scripts/seed.sh
 ```
 
 From the IDE, with MongoDB and Redis from compose:
