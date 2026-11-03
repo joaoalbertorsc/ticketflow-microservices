@@ -61,7 +61,7 @@ curl localhost:8085/api/notifications/me -H "Authorization: Bearer $TOKEN"
 ```
 
 - Testes unitários: cada template, campos obrigatórios lidos dos placeholders, registro completo
-  de templates, idempotência por "reservar a vaga e depois enviar", e-mails devolvidos
+  de templates, idempotência por "registrar primeiro, enviar depois", e-mails devolvidos
 - Testes da camada web: validação, `201` vs. `200`, apenas as próprias notificações, busca
   exclusiva para admin
 - Testes de integração (o Docker precisa estar rodando): MongoDB real — formato do documento
