@@ -10,7 +10,7 @@ microservice architecture: database per service, an orchestrated **saga** with c
 
 | Service | Port | Data store | Status |
 |---|---|---|---|
-| [api-gateway](api-gateway/) | 8080 | — | not started |
+| [api-gateway](api-gateway/) | 8080 | — | done |
 | [auth-service](auth-service/) | 8081 | PostgreSQL | done |
 | [catalog-service](catalog-service/) | 8082 | MongoDB + Redis | done |
 | [inventory-service](inventory-service/) | 8083 | PostgreSQL | done |
@@ -54,5 +54,11 @@ Requires Docker. Optionally copy `.env.example` to `.env` to change secrets.
 
 ```bash
 docker compose up -d --build
+./scripts/demo.sh
 ```
+
+Everything is reached through the gateway at `http://localhost:8080`. The demo creates sample data,
+then runs a confirmed booking, a sold-out sector, a declined card, a booking with
+notification-service stopped, and payment chaos that takes the circuit breaker through OPEN →
+HALF_OPEN → CLOSED. It finishes with a cancellation.
 
