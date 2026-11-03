@@ -1,0 +1,156 @@
+# Local environment for TicketFlow. Services are added here as they are built.
+# Values not set in .env fall back to development-only defaults (see .env.example).
+
+name: ticketflow
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  mongo:
+    image: mongo:8.0
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-root}
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+      - ./infra/mongo/init.js:/docker-entrypoint-initdb.d/init.js:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:8-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  auth-service:
+    build: ./auth-service
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/auth_db
+      DB_USERNAME: auth_user
+      DB_PASSWORD: auth_pass
+      JWT_SECRET: ${JWT_SECRET:-local-dev-secret-change-me-0123456789abcdef}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-1h}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@ticketflow.local}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Admin12345}
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  catalog-service:
+    build: ./catalog-service
+    environment:
+      MONGODB_URI: mongodb://catalog_user:catalog_pass@mongo:27017/catalog_db
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET:-local-dev-secret-change-me-0123456789abcdef}
+    ports:
+      - "8082:8082"
+    depends_on:
+      mongo:
+        condition: service_healthy
+      # Redis is not "service_healthy" on purpose: catalog works without it (cache only).
+      redis:
+        condition: service_started
+
+  inventory-service:
+    build: ./inventory-service
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/inventory_db
+      DB_USERNAME: inventory_user
+      DB_PASSWORD: inventory_pass
+      JWT_SECRET: ${JWT_SECRET:-local-dev-secret-change-me-0123456789abcdef}
+      HOLD_DURATION: ${HOLD_DURATION:-10m}
+    ports:
+      - "8083:8083"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  payment-service:
+    build: ./payment-service
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/payment_db
+      DB_USERNAME: payment_user
+      DB_PASSWORD: payment_pass
+      JWT_SECRET: ${JWT_SECRET:-local-dev-secret-change-me-0123456789abcdef}
+    ports:
+      - "8084:8084"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  notification-service:
+    build: ./notification-service
+    environment:
+      MONGODB_URI: mongodb://notification_user:notification_pass@mongo:27017/notification_db
+      JWT_SECRET: ${JWT_SECRET:-local-dev-secret-change-me-0123456789abcdef}
+    ports:
+      - "8085:8085"
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  booking-service:
+    build: ./booking-service
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/booking_db
+      DB_USERNAME: booking_user
+      DB_PASSWORD: booking_pass
+      JWT_SECRET: ${JWT_SECRET:-local-dev-secret-change-me-0123456789abcdef}
+      AUTH_URL: http://auth-service:8081
+      CATALOG_URL: http://catalog-service:8082
+      INVENTORY_URL: http://inventory-service:8083
+      PAYMENT_URL: http://payment-service:8084
+      NOTIFICATION_URL: http://notification-service:8085
+    ports:
+      - "8086:8086"
+    # Only its own database is required to start: the other services can be down — that is what
+    # the circuit breakers and fallbacks are for.
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # The single entry point. The services above keep their ports published for debugging;
+  # in production only this one would be exposed.
+  api-gateway:
+    build: ./api-gateway
+    environment:
+      JWT_SECRET: ${JWT_SECRET:-local-dev-secret-change-me-0123456789abcdef}
+      AUTH_URL: http://auth-service:8081
+      CATALOG_URL: http://catalog-service:8082
+      INVENTORY_URL: http://inventory-service:8083
+      PAYMENT_URL: http://payment-service:8084
+      NOTIFICATION_URL: http://notification-service:8085
+      BOOKING_URL: http://booking-service:8086
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgres-data:
+  mongo-data:
