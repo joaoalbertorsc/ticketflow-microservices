@@ -6,3 +6,8 @@
 CREATE USER auth_user WITH PASSWORD 'auth_pass';
 CREATE DATABASE auth_db OWNER auth_user;
 REVOKE ALL ON DATABASE auth_db FROM PUBLIC;
+
+-- inventory-service
+CREATE USER inventory_user WITH PASSWORD 'inventory_pass';
+CREATE DATABASE inventory_db OWNER inventory_user;
+REVOKE ALL ON DATABASE inventory_db FROM PUBLIC;
