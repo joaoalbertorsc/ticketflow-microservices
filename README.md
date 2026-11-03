@@ -23,12 +23,12 @@ flowchart LR
 
 ## Challenge requirements — how each one is met
 
-| Requisito (do guia) | Where it is met |
+| Requirement (from the challenge brief) | Where it is met |
 |---|---|
-| **No mínimo 4 microsserviços independentes**, cada um com seu próprio domínio de dados | 6 business services + a gateway. Each one is a standalone Maven project with its own database and no shared code ([ADR 0001](docs/adr/0001-ticketing-domain-and-service-split.md), [ADR 0005](docs/adr/0005-no-shared-libraries.md)) |
-| **Tabelas isoladas por serviço**, sem relacionamento entre domínios diferentes | Stronger than required: a separate **database and user per service** (`auth_db`, `inventory_db`, `payment_db`, `booking_db` in PostgreSQL; `catalog_db`, `notification_db` in MongoDB). References to other domains are plain id columns, never foreign keys ([ADR 0002](docs/adr/0002-database-per-service.md)). Verified by `./scripts/check-db-isolation.sh`: each login opens only its own database |
-| **Circuit Breaker com método de fallback** | Every call from booking-service to another service: `@CircuitBreaker(name = …, fallbackMethod = …)` in [`booking-service/…/infrastructure/client/`](booking-service/src/main/java/com/ticketflow/booking/infrastructure/client/), 7 breakers in total ([resilience.md](docs/resilience.md)). Proven by `CircuitBreakerIntegrationTest` (OPEN → fail fast → HALF_OPEN → CLOSED) and live by `./scripts/demo.sh` |
-| **Fluxo de negócio que passa por todos os microsserviços** | Create booking: gateway → booking → auth → catalog → inventory → payment → inventory → notification, with compensations on failure ([booking-saga.md](docs/booking-saga.md)) |
+| **At least 4 independent microservices**, each with its own data domain | 6 business services + a gateway. Each one is a standalone Maven project with its own database and no shared code ([ADR 0001](docs/adr/0001-ticketing-domain-and-service-split.md), [ADR 0005](docs/adr/0005-no-shared-libraries.md)) |
+| **Tables isolated per service**, with no relationships between different domains | Stronger than required: a separate **database and user per service** (`auth_db`, `inventory_db`, `payment_db`, `booking_db` in PostgreSQL; `catalog_db`, `notification_db` in MongoDB). References to other domains are plain id columns, never foreign keys ([ADR 0002](docs/adr/0002-database-per-service.md)). Verified by `./scripts/check-db-isolation.sh`: each login opens only its own database |
+| **Circuit breaker with a fallback method** | Every call from booking-service to another service: `@CircuitBreaker(name = …, fallbackMethod = …)` in [`booking-service/…/infrastructure/client/`](booking-service/src/main/java/com/ticketflow/booking/infrastructure/client/), 7 breakers in total ([resilience.md](docs/resilience.md)). Proven by `CircuitBreakerIntegrationTest` (OPEN → fail fast → HALF_OPEN → CLOSED) and live by `./scripts/demo.sh` |
+| **A business flow that goes through every microservice** | Create booking: gateway → booking → auth → catalog → inventory → payment → inventory → notification, with compensations on failure ([booking-saga.md](docs/booking-saga.md)) |
 
 ## Services
 
