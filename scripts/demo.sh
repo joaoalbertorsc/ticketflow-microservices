@@ -14,10 +14,14 @@ set -euo pipefail
 export PYTHONIOENCODING=utf-8
 cd "$(dirname "$0")/.."
 
-AUTH=http://localhost:8081
-PAYMENT=http://localhost:8084
-INVENTORY=http://localhost:8083
-BOOKING=http://localhost:8086
+# Every API call goes through the gateway, like a real client. Only the circuit breaker state
+# (an ops endpoint) is read from booking-service directly.
+GATEWAY=${GATEWAY_URL:-http://localhost:8080}
+AUTH=$GATEWAY
+PAYMENT=$GATEWAY
+INVENTORY=$GATEWAY
+BOOKING=$GATEWAY
+BOOKING_OPS=http://localhost:8086
 JSON='Content-Type: application/json'
 
 title() { printf '\n\033[1;36m== %s ==\033[0m\n' "$*"; }
@@ -36,7 +40,7 @@ import sys,json; b=json.load(sys.stdin)
 print(b['status'], b.get('failureCode') or '', '| notification', b['notificationStatus'])
 print('   steps:', ' > '.join(s['step']+('' if s['outcome']=='SUCCEEDED' else '('+s['outcome']+')') for s in b['steps']))" <<<"$out")"
 }
-circuit() { curl -s "$BOOKING/actuator/circuitbreakers" | python -c "import sys,json; print('   paymentService circuit:', json.load(sys.stdin)['circuitBreakers']['paymentService']['state'])"; }
+circuit() { curl -s "$BOOKING_OPS/actuator/circuitbreakers" | python -c "import sys,json; print('   paymentService circuit:', json.load(sys.stdin)['circuitBreakers']['paymentService']['state'])"; }
 seats() { curl -s "$INVENTORY/api/inventory/events/$EVENT/sectors/$1" | field "['availableSeats']"; }
 
 title "Setup: sample data and a demo user"
