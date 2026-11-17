@@ -4,7 +4,25 @@
 
 > Status: **concluído**
 
-**Responsabilidade:** usuários, papéis, cadastro, login e emissão de JWT.
+## Contexto
+
+Todo serviço precisa saber quem está chamando e o que essa pessoa pode fazer, sem que cada um guarde
+usuários ou senhas.
+
+## Ação
+
+É dono dos usuários e papéis: cadastro, login com senhas em hash BCrypt e JWTs assinados que os
+outros serviços validam sozinhos, sem chamar o auth-service. O primeiro administrador é criado na
+inicialização, e só administradores mudam papéis.
+
+## Resultado
+
+A identidade fica em um só lugar. Comprovado por:
+
+- Testes unitários: `UserService`, `AuthenticationService`, `JwtTokenIssuer`
+- Testes da camada web: validação, códigos de status e regras de segurança de cada controller
+- Teste de integração: a aplicação completa contra um PostgreSQL no Testcontainers (o Docker
+  precisa estar rodando)
 
 | | |
 |---|---|
@@ -61,8 +79,3 @@ inicialização.
 ```bash
 ./mvnw test
 ```
-
-- Testes unitários: `UserService`, `AuthenticationService`, `JwtTokenIssuer`
-- Testes da camada web: validação, códigos de status e regras de segurança de cada controller
-- Teste de integração: a aplicação completa contra um PostgreSQL no Testcontainers (o Docker
-  precisa estar rodando)

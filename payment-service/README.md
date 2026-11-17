@@ -4,8 +4,27 @@
 
 > Status: **done**
 
-**Responsibility:** simulated charges and refunds for the booking saga, idempotent by booking id,
-plus a chaos mode to demonstrate the circuit breaker in `booking-service`.
+## Context
+
+The saga must charge and refund safely even when a call times out and is retried, and the circuit
+breaker in booking-service needs a way to be demonstrated.
+
+## Action
+
+Simulated charges and refunds, idempotent by booking id. A refund that arrives before a slow charge
+finishes voids it. An admin-only chaos mode injects failures or latency into charges, while refunds
+stay reliable.
+
+## Result
+
+No double charge and no money left held. Proven by:
+
+- Unit tests: payment transitions, simulated gateway rules, chaos, service idempotency and voiding
+- Web slice tests: declined = `201`, chaos = `503`, owner vs others vs admin, admin-only chaos
+- Integration tests (Docker must be running): real PostgreSQL — charge/refund, no second gateway
+  call on retry, refund before charge, **a refund overtaking a slow in-flight charge**, chaos writes
+  nothing, refunds unaffected by chaos
+- **Concurrency test:** 20 identical charges at once → the gateway is called exactly once
 
 | | |
 |---|---|
@@ -60,10 +79,3 @@ curl -X PUT localhost:8084/api/payments/admin/chaos -H "Authorization: Bearer $A
 ```bash
 ./mvnw test
 ```
-
-- Unit tests: payment transitions, simulated gateway rules, chaos, service idempotency and voiding
-- Web slice tests: declined = `201`, chaos = `503`, owner vs others vs admin, admin-only chaos
-- Integration tests (Docker must be running): real PostgreSQL — charge/refund, no second gateway
-  call on retry, refund before charge, **a refund overtaking a slow in-flight charge**, chaos writes
-  nothing, refunds unaffected by chaos
-- **Concurrency test:** 20 identical charges at once → the gateway is called exactly once

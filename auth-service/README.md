@@ -4,7 +4,24 @@
 
 > Status: **done**
 
-**Responsibility:** users, roles, registration, login and JWT issuing.
+## Context
+
+Every service needs to know who is calling and what they may do, without each one storing users or
+passwords.
+
+## Action
+
+Owns users and roles: registration, login with BCrypt-hashed passwords, and signed JWTs that the
+other services validate on their own, with no call back to auth-service. The first admin is created
+at startup, and only admins change roles.
+
+## Result
+
+Identity lives in one place. Proven by:
+
+- Unit tests: `UserService`, `AuthenticationService`, `JwtTokenIssuer`
+- Web slice tests: validation, status codes and security rules of every controller
+- Integration test: full app against PostgreSQL in Testcontainers (Docker must be running)
 
 | | |
 |---|---|
@@ -59,7 +76,3 @@ The first admin (`admin@ticketflow.local` / `Admin12345` by default) is created 
 ```bash
 ./mvnw test
 ```
-
-- Unit tests: `UserService`, `AuthenticationService`, `JwtTokenIssuer`
-- Web slice tests: validation, status codes and security rules of every controller
-- Integration test: full app against PostgreSQL in Testcontainers (Docker must be running)

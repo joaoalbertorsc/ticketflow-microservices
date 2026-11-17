@@ -4,7 +4,26 @@
 
 > Status: **done**
 
-**Responsibility:** venues, events, sectors and prices. Read-heavy, cached in Redis.
+## Context
+
+The catalog is read far more than it is written, and booking-service needs each sector's price at
+the moment of the sale.
+
+## Action
+
+Stores venues and events in MongoDB as self-contained documents, with polymorphic details per event
+type and exact `Decimal128` prices. Reads are cached in Redis; if Redis fails, the service answers
+straight from MongoDB.
+
+## Result
+
+Fast reads that survive the cache going down. Proven by:
+
+- Unit tests: `Event` lifecycle rules, query and command services
+- Web slice tests: public vs admin access, polymorphic `details` JSON, validation, error mapping
+- Integration tests (Docker must be running): MongoDB + Redis in Testcontainers — documents and
+  `Decimal128` prices as stored, cache hit and eviction, and a run with **Redis unreachable** proving
+  the catalog still answers from MongoDB
 
 | | |
 |---|---|
@@ -64,9 +83,3 @@ docker compose exec redis redis-cli --scan --pattern '*'   # see what is cached
 ```bash
 ./mvnw test
 ```
-
-- Unit tests: `Event` lifecycle rules, query and command services
-- Web slice tests: public vs admin access, polymorphic `details` JSON, validation, error mapping
-- Integration tests (Docker must be running): MongoDB + Redis in Testcontainers — documents and
-  `Decimal128` prices as stored, cache hit and eviction, and a run with **Redis unreachable** proving
-  the catalog still answers from MongoDB

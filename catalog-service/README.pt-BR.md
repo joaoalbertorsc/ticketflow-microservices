@@ -4,8 +4,27 @@
 
 > Status: **concluído**
 
-**Responsabilidade:** locais, eventos, setores e preços. Muito mais lido do que escrito, com cache
-no Redis.
+## Contexto
+
+O catálogo é muito mais lido do que escrito, e o booking-service precisa do preço de cada setor no
+momento da venda.
+
+## Ação
+
+Guarda locais e eventos no MongoDB como documentos completos, com detalhes polimórficos por tipo de
+evento e preços exatos em `Decimal128`. As leituras têm cache no Redis; se o Redis falhar, o serviço
+responde direto do MongoDB.
+
+## Resultado
+
+Leituras rápidas que sobrevivem à queda do cache. Comprovado por:
+
+- Testes unitários: regras do ciclo de vida do `Event`, serviços de consulta e de comando
+- Testes da camada web: acesso público vs. admin, JSON polimórfico de `details`, validação,
+  mapeamento de erros
+- Testes de integração (o Docker precisa estar rodando): MongoDB + Redis no Testcontainers —
+  documentos e preços em `Decimal128` como ficam gravados, acerto e invalidação do cache, e uma
+  execução com o **Redis inacessível** provando que o catálogo continua respondendo pelo MongoDB
 
 | | |
 |---|---|
@@ -66,10 +85,3 @@ docker compose exec redis redis-cli --scan --pattern '*'   # veja o que está em
 ```bash
 ./mvnw test
 ```
-
-- Testes unitários: regras do ciclo de vida do `Event`, serviços de consulta e de comando
-- Testes da camada web: acesso público vs. admin, JSON polimórfico de `details`, validação,
-  mapeamento de erros
-- Testes de integração (o Docker precisa estar rodando): MongoDB + Redis no Testcontainers —
-  documentos e preços em `Decimal128` como ficam gravados, acerto e invalidação do cache, e uma
-  execução com o **Redis inacessível** provando que o catálogo continua respondendo pelo MongoDB

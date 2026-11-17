@@ -4,9 +4,28 @@
 
 > Status: **done**
 
-**Responsibility:** bookings and the **booking saga** — the flow that goes through every other
-service, with a **Resilience4j circuit breaker and fallback method** on every call, compensations,
-and a recovery job.
+## Context
+
+One booking crosses five services over the network, and any of them can be slow, down or fail
+halfway through the sale.
+
+## Action
+
+Orchestrates the booking **saga**: every step is committed before the next call, and a failure
+triggers compensations (refund, release seats). Every call has a **Resilience4j circuit breaker with
+a fallback method**, compensations have breakers of their own, and a recovery job finishes whatever
+a crash left behind.
+
+## Result
+
+A booking always ends confirmed or fully undone. Proven by:
+
+- `BookingSagaTest` — every success, failure and fallback of the saga, against in-memory fakes
+- `CircuitBreakerIntegrationTest` — real Resilience4j against WireMock: business answers don't
+  count, 5xx and timeouts do, OPEN → fail fast, HALF_OPEN → CLOSED, on-behalf-of tokens
+- `SagaIntegrationTest` — the whole saga over HTTP and PostgreSQL: status codes, compensations,
+  the recovery job (unfinished undo, crash mid-saga, pending notification), idempotency, cancel
+- `BookingControllerTest` — status per outcome, validation, ownership, admin-only routes
 
 | | |
 |---|---|
@@ -62,10 +81,3 @@ docker compose up -d --build
 ```bash
 ./mvnw test
 ```
-
-- `BookingSagaTest` — every success, failure and fallback of the saga, against in-memory fakes
-- `CircuitBreakerIntegrationTest` — real Resilience4j against WireMock: business answers don't
-  count, 5xx and timeouts do, OPEN → fail fast, HALF_OPEN → CLOSED, on-behalf-of tokens
-- `SagaIntegrationTest` — the whole saga over HTTP and PostgreSQL: status codes, compensations,
-  the recovery job (unfinished undo, crash mid-saga, pending notification), idempotency, cancel
-- `BookingControllerTest` — status per outcome, validation, ownership, admin-only routes

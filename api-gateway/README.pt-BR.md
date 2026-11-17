@@ -4,9 +4,29 @@
 
 > Status: **concluído**
 
-**Responsabilidade:** o ponto de entrada único. Encaminha cada caminho público ao seu serviço,
-rejeita na borda as requisições sem um token válido, nunca expõe `/internal/**` e marca cada
-requisição com um `X-Request-Id`.
+## Contexto
+
+Sete serviços em sete portas obrigariam o cliente a conhecer todos os endereços, e cada serviço
+teria de repetir as mesmas validações de borda.
+
+## Ação
+
+Um ponto de entrada único na porta 8080 que encaminha cada caminho público ao seu serviço, rejeita
+requisições sem um JWT válido antes de chegarem a qualquer serviço, nunca expõe `/internal/**` e
+marca cada requisição com um `X-Request-Id`. As rotas são configuração; o único código Java são as
+regras de segurança e o filtro de id de requisição.
+
+## Resultado
+
+O `GatewayTest` roda o gateway de verdade na frente de seis servidores WireMock, um por serviço, e
+comprova:
+
+- cada rota chega ao serviço certo, com caminho, query, corpo e headers inalterados;
+- rotas públicas não precisam de token; as protegidas recebem `401` sem token ou com um token
+  forjado, expirado ou de outro emissor, e a requisição nunca chega ao serviço;
+- `/internal/**` responde `404` mesmo com um token válido;
+- ids de requisição são gerados, mantidos quando válidos, substituídos quando não, e devolvidos
+  também nas rejeições.
 
 | | |
 |---|---|
@@ -55,11 +75,3 @@ docker compose logs api-gateway | grep access      # uma linha por requisição,
 ```bash
 ./mvnw test
 ```
-
-O `GatewayTest` roda o gateway de verdade na frente de seis servidores WireMock, um por serviço:
-- cada rota chega ao serviço certo, com caminho, query, corpo e headers inalterados;
-- rotas públicas não precisam de token; as protegidas recebem `401` sem token ou com um token
-  forjado, expirado ou de outro emissor, e a requisição nunca chega ao serviço;
-- `/internal/**` responde `404` mesmo com um token válido;
-- ids de requisição são gerados, mantidos quando válidos, substituídos quando não, e devolvidos
-  também nas rejeições.

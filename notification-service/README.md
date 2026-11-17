@@ -4,8 +4,27 @@
 
 > Status: **done**
 
-**Responsibility:** simulated e-mail notifications (booking confirmed / failed / cancelled), each
-stored as a self-contained document and never sent twice for the same booking.
+## Context
+
+A booking must tell the buyer whether it was confirmed, failed or cancelled, and a retried saga step
+must not e-mail them twice.
+
+## Action
+
+Builds simulated e-mails from templates and stores each one as a self-contained MongoDB document. A
+unique index per booking and type makes sending claim-then-send: the record is written first, the
+e-mail sent after.
+
+## Result
+
+Each notification goes out exactly once. Proven by:
+
+- Unit tests: each template, required fields read from placeholders, registry completeness,
+  claim-then-send idempotency, bounces
+- Web slice tests: validation, `201` vs `200`, own notifications only, admin-only search
+- Integration tests (Docker must be running): real MongoDB — stored document shape and UUID
+  format, unique index, separate types per booking, **10 identical concurrent requests send one
+  e-mail**, newest-first paging per user
 
 | | |
 |---|---|
@@ -58,10 +77,3 @@ curl localhost:8085/api/notifications/me -H "Authorization: Bearer $TOKEN"
 ```bash
 ./mvnw test
 ```
-
-- Unit tests: each template, required fields read from placeholders, registry completeness,
-  claim-then-send idempotency, bounces
-- Web slice tests: validation, `201` vs `200`, own notifications only, admin-only search
-- Integration tests (Docker must be running): real MongoDB — stored document shape and UUID
-  format, unique index, separate types per booking, **10 identical concurrent requests send one
-  e-mail**, newest-first paging per user
