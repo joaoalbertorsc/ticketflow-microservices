@@ -39,6 +39,7 @@ public class SecurityConfig {
 						// @PreAuthorize on the controller stays as a second layer.
 						.requestMatchers("/api/inventory/**").hasRole("ADMIN")
 						.requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
+						.requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
 						.requestMatchers("/error").permitAll()
 						.anyRequest().authenticated())
 				.oauth2ResourceServer(oauth2 -> oauth2
