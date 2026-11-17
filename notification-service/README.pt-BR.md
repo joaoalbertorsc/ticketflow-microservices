@@ -4,8 +4,28 @@
 
 > Status: **concluído**
 
-**Responsabilidade:** notificações por e-mail simuladas (reserva confirmada / falhou / cancelada),
-cada uma guardada como um documento completo e nunca enviada duas vezes para a mesma reserva.
+## Contexto
+
+Uma reserva precisa avisar o comprador se foi confirmada, falhou ou foi cancelada, e um passo da
+saga repetido não pode mandar o e-mail duas vezes.
+
+## Ação
+
+Monta e-mails simulados a partir de templates e guarda cada um como um documento completo no
+MongoDB. Um índice único por reserva e tipo faz o envio no estilo "registrar primeiro, enviar
+depois".
+
+## Resultado
+
+Cada notificação sai exatamente uma vez. Comprovado por:
+
+- Testes unitários: cada template, campos obrigatórios lidos dos placeholders, registro completo
+  de templates, idempotência por "registrar primeiro, enviar depois", e-mails devolvidos
+- Testes da camada web: validação, `201` vs. `200`, apenas as próprias notificações, busca
+  exclusiva para admin
+- Testes de integração (o Docker precisa estar rodando): MongoDB real — formato do documento
+  gravado e dos UUIDs, índice único, tipos separados por reserva, **10 requisições idênticas ao
+  mesmo tempo enviam um único e-mail**, paginação por usuário da mais nova para a mais antiga
 
 | | |
 |---|---|
@@ -59,11 +79,3 @@ curl localhost:8085/api/notifications/me -H "Authorization: Bearer $TOKEN"
 ```bash
 ./mvnw test
 ```
-
-- Testes unitários: cada template, campos obrigatórios lidos dos placeholders, registro completo
-  de templates, idempotência por "registrar primeiro, enviar depois", e-mails devolvidos
-- Testes da camada web: validação, `201` vs. `200`, apenas as próprias notificações, busca
-  exclusiva para admin
-- Testes de integração (o Docker precisa estar rodando): MongoDB real — formato do documento
-  gravado e dos UUIDs, índice único, tipos separados por reserva, **10 requisições idênticas ao
-  mesmo tempo enviam um único e-mail**, paginação por usuário da mais nova para a mais antiga

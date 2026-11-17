@@ -38,6 +38,7 @@ public class SecurityConfig {
 						.requestMatchers(HttpMethod.PUT, "/api/events/**").hasRole("ADMIN")
 						.requestMatchers("/api/admin/**").hasRole("ADMIN")
 						.requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
+						.requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
 						.requestMatchers("/error").permitAll()
 						.anyRequest().authenticated())
 				.oauth2ResourceServer(oauth2 -> oauth2

@@ -4,8 +4,30 @@
 
 > Status: **concluído**
 
-**Responsabilidade:** cobranças e reembolsos simulados para a saga de reserva, idempotentes pelo
-id da reserva, além de um modo caos para demonstrar o circuit breaker do `booking-service`.
+## Contexto
+
+A saga precisa cobrar e reembolsar com segurança mesmo quando uma chamada dá timeout e é repetida, e
+o circuit breaker do booking-service precisa de um jeito de ser demonstrado.
+
+## Ação
+
+Cobranças e reembolsos simulados, idempotentes pelo id da reserva. Um reembolso que chega antes de
+uma cobrança lenta terminar a anula. Um modo caos, só para admin, injeta falhas ou lentidão nas
+cobranças, enquanto os reembolsos continuam confiáveis.
+
+## Resultado
+
+Sem cobrança em dobro e sem dinheiro preso. Comprovado por:
+
+- Testes unitários: transições do pagamento, regras do gateway simulado, modo caos, idempotência
+  e anulação no serviço
+- Testes da camada web: recusa = `201`, caos = `503`, dono vs. outros vs. admin, caos só para admin
+- Testes de integração (o Docker precisa estar rodando): PostgreSQL real — cobrança/reembolso, sem
+  segunda chamada ao gateway em uma nova tentativa, reembolso antes da cobrança, **um reembolso que
+  ultrapassa uma cobrança lenta ainda em andamento**, caos não grava nada, reembolsos não são
+  afetados pelo caos
+- **Teste de concorrência:** 20 cobranças idênticas ao mesmo tempo → o gateway é chamado
+  exatamente uma vez
 
 | | |
 |---|---|
@@ -61,13 +83,3 @@ curl -X PUT localhost:8084/api/payments/admin/chaos -H "Authorization: Bearer $A
 ```bash
 ./mvnw test
 ```
-
-- Testes unitários: transições do pagamento, regras do gateway simulado, modo caos, idempotência
-  e anulação no serviço
-- Testes da camada web: recusa = `201`, caos = `503`, dono vs. outros vs. admin, caos só para admin
-- Testes de integração (o Docker precisa estar rodando): PostgreSQL real — cobrança/reembolso, sem
-  segunda chamada ao gateway em uma nova tentativa, reembolso antes da cobrança, **um reembolso que
-  ultrapassa uma cobrança lenta ainda em andamento**, caos não grava nada, reembolsos não são
-  afetados pelo caos
-- **Teste de concorrência:** 20 cobranças idênticas ao mesmo tempo → o gateway é chamado
-  exatamente uma vez

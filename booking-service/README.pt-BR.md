@@ -4,9 +4,32 @@
 
 > Status: **concluído**
 
-**Responsabilidade:** as reservas e a **saga de reserva** — o fluxo que passa por todos os outros
-serviços, com um **circuit breaker do Resilience4j e um método de fallback** em cada chamada,
-compensações e um job de recuperação.
+## Contexto
+
+Uma reserva atravessa cinco serviços pela rede, e qualquer um deles pode ficar lento, cair ou falhar
+no meio da venda.
+
+## Ação
+
+Orquestra a **saga de reserva**: cada passo é gravado antes da próxima chamada, e uma falha dispara
+compensações (reembolso, liberação de assentos). Cada chamada tem um **circuit breaker do
+Resilience4j com método de fallback**, as compensações têm circuit breakers próprios, e um job de
+recuperação termina o que uma queda deixou pela metade.
+
+## Resultado
+
+Uma reserva sempre termina confirmada ou totalmente desfeita. Comprovado por:
+
+- `BookingSagaTest` — cada sucesso, falha e fallback da saga, contra implementações falsas em
+  memória
+- `CircuitBreakerIntegrationTest` — Resilience4j de verdade contra o WireMock: respostas de
+  negócio não contam como falha, 5xx e timeouts contam, OPEN → falha rápida, HALF_OPEN → CLOSED,
+  tokens "em nome de" do usuário
+- `SagaIntegrationTest` — a saga inteira via HTTP e PostgreSQL: códigos de status, compensações,
+  o job de recuperação (desfazimento pendente, queda no meio da saga, notificação pendente),
+  idempotência, cancelamento
+- `BookingControllerTest` — status por resultado, validação, posse da reserva, rotas exclusivas
+  de admin
 
 | | |
 |---|---|
@@ -64,14 +87,3 @@ docker compose up -d --build
 ```bash
 ./mvnw test
 ```
-
-- `BookingSagaTest` — cada sucesso, falha e fallback da saga, contra implementações falsas em
-  memória
-- `CircuitBreakerIntegrationTest` — Resilience4j de verdade contra o WireMock: respostas de
-  negócio não contam como falha, 5xx e timeouts contam, OPEN → falha rápida, HALF_OPEN → CLOSED,
-  tokens "em nome de" do usuário
-- `SagaIntegrationTest` — a saga inteira via HTTP e PostgreSQL: códigos de status, compensações,
-  o job de recuperação (desfazimento pendente, queda no meio da saga, notificação pendente),
-  idempotência, cancelamento
-- `BookingControllerTest` — status por resultado, validação, posse da reserva, rotas exclusivas
-  de admin
