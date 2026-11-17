@@ -4,8 +4,28 @@
 
 > Status: **concluído**
 
-**Responsabilidade:** assentos por setor e reservas (reter → confirmar / liberar). Garante que
-nunca se vende mais assentos do que existem, mesmo com muita concorrência.
+## Contexto
+
+Muitos compradores podem disputar os últimos assentos ao mesmo tempo, e a saga pode repetir uma
+chamada após um timeout.
+
+## Ação
+
+Controla os assentos por setor e as reservas no ciclo reter → confirmar / liberar, com retenções que
+expiram. Toda chamada interna é identificada pelo `bookingId`, então repeti-la nunca retém assentos
+em dobro.
+
+## Resultado
+
+Nunca vende mais assentos do que existem, mesmo com muita concorrência. Comprovado por:
+
+- Testes unitários: máquina de estados da reserva, regras de idempotência, tratamento da expiração
+- Testes da camada web: acesso público / admin / interno, validação, mapeamento de erros
+- Testes de integração (o Docker precisa estar rodando): PostgreSQL real — contagem de assentos ao
+  longo de todo o ciclo de vida, chamadas repetidas, confirmação após a expiração, o job de
+  expiração, redimensionamento
+- **Teste de concorrência:** 50 compradores em paralelo, 10 assentos → exatamente 10 conseguem,
+  `available_seats = 0`
 
 | | |
 |---|---|
@@ -69,11 +89,3 @@ curl localhost:8083/api/inventory/events/<event>/sectors
 ```bash
 ./mvnw test
 ```
-
-- Testes unitários: máquina de estados da reserva, regras de idempotência, tratamento da expiração
-- Testes da camada web: acesso público / admin / interno, validação, mapeamento de erros
-- Testes de integração (o Docker precisa estar rodando): PostgreSQL real — contagem de assentos ao
-  longo de todo o ciclo de vida, chamadas repetidas, confirmação após a expiração, o job de
-  expiração, redimensionamento
-- **Teste de concorrência:** 50 compradores em paralelo, 10 assentos → exatamente 10 conseguem,
-  `available_seats = 0`

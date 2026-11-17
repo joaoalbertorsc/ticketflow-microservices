@@ -4,9 +4,27 @@
 
 > Status: **done**
 
-**Responsibility:** the single entry point. Routes each public path to its service, rejects
-requests without a valid token at the edge, never exposes `/internal/**`, and tags every request
-with an `X-Request-Id`.
+## Context
+
+Seven services on seven ports would force clients to know every address, and each service would have
+to repeat the same edge checks.
+
+## Action
+
+One entry point on port 8080 that routes each public path to its service, rejects requests without a
+valid JWT before they reach any service, never exposes `/internal/**`, and tags every request with
+an `X-Request-Id`. Routes are configuration; the only Java is the security rules and the request-id
+filter.
+
+## Result
+
+`GatewayTest` runs the real gateway in front of six WireMock servers, one per service, and proves:
+
+- every route reaches the right service, with path, query, body and headers unchanged;
+- public routes need no token; protected ones get `401` without a token, or with a forged, expired
+  or foreign one, and the request never reaches the service;
+- `/internal/**` is `404` even with a valid token;
+- request ids are generated, kept when sane, replaced when not, and returned on rejections too.
 
 | | |
 |---|---|
@@ -54,10 +72,3 @@ docker compose logs api-gateway | grep access      # one line per request, with 
 ```bash
 ./mvnw test
 ```
-
-`GatewayTest` runs the real gateway in front of six WireMock servers, one per service:
-- every route reaches the right service, with path, query, body and headers unchanged;
-- public routes need no token; protected ones get `401` without a token, or with a forged, expired
-  or foreign one, and the request never reaches the service;
-- `/internal/**` is `404` even with a valid token;
-- request ids are generated, kept when sane, replaced when not, and returned on rejections too.

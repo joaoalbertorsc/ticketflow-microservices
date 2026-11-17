@@ -4,8 +4,25 @@
 
 > Status: **done**
 
-**Responsibility:** seats per sector and reservations (hold → confirm / release). Guarantees no
-overselling, even under heavy concurrency.
+## Context
+
+Many buyers can reach for the last seats at the same moment, and the saga may repeat a call after a
+timeout.
+
+## Action
+
+Tracks seats per sector and reservations through hold → confirm / release, with expiring holds.
+Every internal call is keyed by `bookingId`, so repeating it never holds seats twice.
+
+## Result
+
+Never oversold, even under heavy concurrency. Proven by:
+
+- Unit tests: reservation state machine, idempotency rules, expiry handling
+- Web slice tests: public / admin / internal access, validation, error mapping
+- Integration tests (Docker must be running): real PostgreSQL — seat accounting through the whole
+  lifecycle, repeated calls, confirm after expiry, the expiry job, resizing
+- **Concurrency test:** 50 parallel buyers, 10 seats → exactly 10 succeed, `available_seats = 0`
 
 | | |
 |---|---|
@@ -68,9 +85,3 @@ curl localhost:8083/api/inventory/events/<event>/sectors
 ```bash
 ./mvnw test
 ```
-
-- Unit tests: reservation state machine, idempotency rules, expiry handling
-- Web slice tests: public / admin / internal access, validation, error mapping
-- Integration tests (Docker must be running): real PostgreSQL — seat accounting through the whole
-  lifecycle, repeated calls, confirm after expiry, the expiry job, resizing
-- **Concurrency test:** 50 parallel buyers, 10 seats → exactly 10 succeed, `available_seats = 0`
