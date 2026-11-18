@@ -13,6 +13,8 @@ import org.springframework.cache.interceptor.LoggingCacheErrorHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
+import org.springframework.data.redis.cache.RedisCacheWriter;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.serializer.JacksonJsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext.SerializationPair;
 import tools.jackson.databind.json.JsonMapper;
@@ -28,8 +30,12 @@ import java.time.Duration;
 public class CacheConfig implements CachingConfigurer {
 
 	@Bean
-	RedisCacheManagerBuilderCustomizer catalogCaches(JsonMapper jsonMapper, @Value("${ticketflow.cache.ttl:10m}") Duration ttl) {
+	RedisCacheManagerBuilderCustomizer catalogCaches(RedisConnectionFactory connectionFactory, JsonMapper jsonMapper,
+			@Value("${ticketflow.cache.ttl:10m}") Duration ttl) {
 		return builder -> builder
+				// Writes and evictions finish before the method returns: by default clearing a cache
+				// is asynchronous, so a read right after a cancellation could still get the old entry.
+				.cacheWriter(RedisCacheWriter.create(connectionFactory, writer -> writer.immediateWrites()))
 				.withCacheConfiguration(CacheNames.EVENTS,
 						cacheOf(ttl, new JacksonJsonRedisSerializer<>(jsonMapper, EventView.class)))
 				.withCacheConfiguration(CacheNames.EVENT_SECTORS,
