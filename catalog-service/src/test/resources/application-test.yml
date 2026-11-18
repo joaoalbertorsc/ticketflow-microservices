@@ -1,3 +1,10 @@
 ticketflow:
   jwt:
     secret: test-secret-0123456789abcdef0123456789abcdef
+
+spring:
+  data:
+    redis:
+      # Production fails fast at 500 ms; on a cold CI runner a real cache call can take longer, and
+      # the swallowed error left stale entries that made the cache tests flaky.
+      timeout: 5s
