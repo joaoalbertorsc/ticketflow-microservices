@@ -50,15 +50,15 @@ Also proven by tests:
 
 ## Services
 
-| Service | Port | Data store | Owns |
-|---|---|---|---|
-| [api-gateway](api-gateway/) | 8080 | — | single entry point, edge JWT check, request ids |
-| [auth-service](auth-service/) | 8081 | PostgreSQL | users, roles, JWT issuing |
-| [catalog-service](catalog-service/) | 8082 | MongoDB + Redis | events, venues, sectors, prices (cached) |
-| [inventory-service](inventory-service/) | 8083 | PostgreSQL | seats and reservations |
-| [payment-service](payment-service/) | 8084 | PostgreSQL | simulated charges and refunds, chaos mode |
-| [notification-service](notification-service/) | 8085 | MongoDB | simulated e-mails |
-| [booking-service](booking-service/) | 8086 | PostgreSQL | bookings, the saga, circuit breakers, recovery job |
+| Service | Port | Data store | Owns | CI |
+|---|---|---|---|---|
+| [api-gateway](api-gateway/) | 8080 | — | single entry point, edge JWT check, request ids | [![api-gateway](https://github.com/joaoalbertorsc/ticketflow-microservices/actions/workflows/api-gateway.yml/badge.svg?branch=main)](https://github.com/joaoalbertorsc/ticketflow-microservices/actions/workflows/api-gateway.yml) |
+| [auth-service](auth-service/) | 8081 | PostgreSQL | users, roles, JWT issuing | [![auth-service](https://github.com/joaoalbertorsc/ticketflow-microservices/actions/workflows/auth-service.yml/badge.svg?branch=main)](https://github.com/joaoalbertorsc/ticketflow-microservices/actions/workflows/auth-service.yml) |
+| [catalog-service](catalog-service/) | 8082 | MongoDB + Redis | events, venues, sectors, prices (cached) | [![catalog-service](https://github.com/joaoalbertorsc/ticketflow-microservices/actions/workflows/catalog-service.yml/badge.svg?branch=main)](https://github.com/joaoalbertorsc/ticketflow-microservices/actions/workflows/catalog-service.yml) |
+| [inventory-service](inventory-service/) | 8083 | PostgreSQL | seats and reservations | [![inventory-service](https://github.com/joaoalbertorsc/ticketflow-microservices/actions/workflows/inventory-service.yml/badge.svg?branch=main)](https://github.com/joaoalbertorsc/ticketflow-microservices/actions/workflows/inventory-service.yml) |
+| [payment-service](payment-service/) | 8084 | PostgreSQL | simulated charges and refunds, chaos mode | [![payment-service](https://github.com/joaoalbertorsc/ticketflow-microservices/actions/workflows/payment-service.yml/badge.svg?branch=main)](https://github.com/joaoalbertorsc/ticketflow-microservices/actions/workflows/payment-service.yml) |
+| [notification-service](notification-service/) | 8085 | MongoDB | simulated e-mails | [![notification-service](https://github.com/joaoalbertorsc/ticketflow-microservices/actions/workflows/notification-service.yml/badge.svg?branch=main)](https://github.com/joaoalbertorsc/ticketflow-microservices/actions/workflows/notification-service.yml) |
+| [booking-service](booking-service/) | 8086 | PostgreSQL | bookings, the saga, circuit breakers, recovery job | [![booking-service](https://github.com/joaoalbertorsc/ticketflow-microservices/actions/workflows/booking-service.yml/badge.svg?branch=main)](https://github.com/joaoalbertorsc/ticketflow-microservices/actions/workflows/booking-service.yml) |
 
 ## Tech stack
 
