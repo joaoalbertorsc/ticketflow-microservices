@@ -55,15 +55,15 @@ Também comprovado por testes:
 
 ## Serviços
 
-| Serviço | Porta | Armazenamento | Responsável por |
-|---|---|---|---|
-| [api-gateway](api-gateway/README.pt-BR.md) | 8080 | — | ponto de entrada único, validação do JWT na borda, ids de requisição |
-| [auth-service](auth-service/README.pt-BR.md) | 8081 | PostgreSQL | usuários, papéis, emissão de JWT |
-| [catalog-service](catalog-service/README.pt-BR.md) | 8082 | MongoDB + Redis | eventos, locais, setores, preços (com cache) |
-| [inventory-service](inventory-service/README.pt-BR.md) | 8083 | PostgreSQL | assentos e reservas |
-| [payment-service](payment-service/README.pt-BR.md) | 8084 | PostgreSQL | cobranças e reembolsos simulados, modo caos |
-| [notification-service](notification-service/README.pt-BR.md) | 8085 | MongoDB | e-mails simulados |
-| [booking-service](booking-service/README.pt-BR.md) | 8086 | PostgreSQL | reservas, a saga, os circuit breakers, o job de recuperação |
+| Serviço | Porta | Armazenamento | Responsável por | CI |
+|---|---|---|---|---|
+| [api-gateway](api-gateway/README.pt-BR.md) | 8080 | — | ponto de entrada único, validação do JWT na borda, ids de requisição | [![api-gateway](https://github.com/joaoalbertorsc/ticketflow-microservices/actions/workflows/api-gateway.yml/badge.svg?branch=main)](https://github.com/joaoalbertorsc/ticketflow-microservices/actions/workflows/api-gateway.yml) |
+| [auth-service](auth-service/README.pt-BR.md) | 8081 | PostgreSQL | usuários, papéis, emissão de JWT | [![auth-service](https://github.com/joaoalbertorsc/ticketflow-microservices/actions/workflows/auth-service.yml/badge.svg?branch=main)](https://github.com/joaoalbertorsc/ticketflow-microservices/actions/workflows/auth-service.yml) |
+| [catalog-service](catalog-service/README.pt-BR.md) | 8082 | MongoDB + Redis | eventos, locais, setores, preços (com cache) | [![catalog-service](https://github.com/joaoalbertorsc/ticketflow-microservices/actions/workflows/catalog-service.yml/badge.svg?branch=main)](https://github.com/joaoalbertorsc/ticketflow-microservices/actions/workflows/catalog-service.yml) |
+| [inventory-service](inventory-service/README.pt-BR.md) | 8083 | PostgreSQL | assentos e reservas | [![inventory-service](https://github.com/joaoalbertorsc/ticketflow-microservices/actions/workflows/inventory-service.yml/badge.svg?branch=main)](https://github.com/joaoalbertorsc/ticketflow-microservices/actions/workflows/inventory-service.yml) |
+| [payment-service](payment-service/README.pt-BR.md) | 8084 | PostgreSQL | cobranças e reembolsos simulados, modo caos | [![payment-service](https://github.com/joaoalbertorsc/ticketflow-microservices/actions/workflows/payment-service.yml/badge.svg?branch=main)](https://github.com/joaoalbertorsc/ticketflow-microservices/actions/workflows/payment-service.yml) |
+| [notification-service](notification-service/README.pt-BR.md) | 8085 | MongoDB | e-mails simulados | [![notification-service](https://github.com/joaoalbertorsc/ticketflow-microservices/actions/workflows/notification-service.yml/badge.svg?branch=main)](https://github.com/joaoalbertorsc/ticketflow-microservices/actions/workflows/notification-service.yml) |
+| [booking-service](booking-service/README.pt-BR.md) | 8086 | PostgreSQL | reservas, a saga, os circuit breakers, o job de recuperação | [![booking-service](https://github.com/joaoalbertorsc/ticketflow-microservices/actions/workflows/booking-service.yml/badge.svg?branch=main)](https://github.com/joaoalbertorsc/ticketflow-microservices/actions/workflows/booking-service.yml) |
 
 ## Tecnologias
 
